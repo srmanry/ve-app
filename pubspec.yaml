@@ -1,0 +1,93 @@
+name: video_editor_app
+description: "An offline, privacy-first mobile video editor. All processing happens on-device."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^3.4.3
+
+  # Local video processing (FFmpeg 8.1, bundled natively; no network).
+  # NOTE: the "_gpl" variant includes libx264, which is GPL-licensed. See
+  # README "Licensing" before shipping a closed-source build.
+  ffmpeg_kit_flutter_new_min_gpl: ^2.6.2
+
+  # Playback / preview
+  video_player: ^2.14.0
+
+  # Import (system pickers - no broad storage permission needed)
+  file_picker: ^13.1.0
+  image_picker: ^1.2.3
+
+  # Local storage
+  path_provider: ^2.1.6
+  shared_preferences: ^2.5.5
+  path: ^1.9.1
+
+  # Output actions
+  share_plus: ^13.3.0
+  gal: ^2.3.3
+  open_filex: ^4.7.0
+  url_launcher: ^6.3.2
+
+  # Keep the device awake during long exports
+  wakelock_plus: ^1.8.0
+
+  uuid: ^4.6.0
+  cupertino_icons: ^1.0.8
+  camera: ^0.12.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+    - family: BebasNeue
+      fonts:
+        - asset: assets/fonts/BebasNeue-Regular.ttf
+    - family: Pacifico
+      fonts:
+        - asset: assets/fonts/Pacifico-Regular.ttf
+    - family: Lobster
+      fonts:
+        - asset: assets/fonts/Lobster-Regular.ttf
+    - family: PermanentMarker
+      fonts:
+        - asset: assets/fonts/PermanentMarker-Regular.ttf
+    - family: RobotoMono
+      fonts:
+        - asset: assets/fonts/RobotoMono_wght.ttf
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay_wght.ttf
+    - family: Oswald
+      fonts:
+        - asset: assets/fonts/Oswald_wght.ttf
+
+  assets:
+    - assets/fonts/OFL.txt
+    - assets/fonts/OFL-Poppins.txt
+    - assets/fonts/LICENSE-Apache.txt
