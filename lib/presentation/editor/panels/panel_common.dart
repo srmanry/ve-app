@@ -26,12 +26,16 @@ class ToolPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 6, 4, 0),
           child: Row(
             children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
               ),
-              const Spacer(),
+              if (actions.isNotEmpty) const SizedBox(width: 8),
               ...actions,
               IconButton(
                 tooltip: 'Done',
@@ -66,7 +70,9 @@ class PanelHint extends StatelessWidget {
         Text(
           text,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         if (action != null) ...[const SizedBox(height: 12), action!],
       ],
@@ -104,7 +110,10 @@ class LabeledSlider extends StatelessWidget {
     final text = format?.call(value) ?? value.toStringAsFixed(2);
     return Row(
       children: [
-        SizedBox(width: 92, child: Text(label, style: const TextStyle(fontSize: 13))),
+        SizedBox(
+          width: 92,
+          child: Text(label, style: const TextStyle(fontSize: 13)),
+        ),
         Expanded(
           child: Slider(
             value: value.clamp(min, max),
@@ -119,7 +128,11 @@ class LabeledSlider extends StatelessWidget {
         ),
         SizedBox(
           width: 48,
-          child: Text(text, textAlign: TextAlign.right, style: const TextStyle(fontSize: 12)),
+          child: Text(
+            text,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontSize: 12),
+          ),
         ),
       ],
     );
@@ -242,7 +255,11 @@ class ColorSwatchRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       children: [
         if (allowNone)
-          _swatch(context, null, child: const Icon(Icons.block, size: 18, color: Colors.white70)),
+          _swatch(
+            context,
+            null,
+            child: const Icon(Icons.block, size: 18, color: Colors.white70),
+          ),
         for (final c in kSwatches) _swatch(context, c),
       ],
     ),

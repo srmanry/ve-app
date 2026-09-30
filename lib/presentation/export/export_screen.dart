@@ -53,7 +53,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   CameraLogo? _logo;
 
   Project get _exportProject {
-    final shaped = widget.project.copyWith(canvas: _settings.canvasFor(widget.project.canvas));
+    final shaped = widget.project.copyWith(
+      canvas: _settings.canvasFor(widget.project.canvas),
+    );
     final logo = _logo;
     if (logo == null) return shaped;
     final timeline = ProjectTimeline(shaped);
@@ -105,7 +107,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
   Future<void> _start() async {
     // Includes this export's logo; the shape override is idempotent in the service.
-    final job = ref.read(exportServiceProvider).exportProject(_exportProject, _settings);
+    final job = ref
+        .read(exportServiceProvider)
+        .exportProject(_exportProject, _settings);
     setState(() {
       _job = job;
       _progress = const ExportProgress(ExportStage.preparing, 0);
@@ -152,7 +156,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: Text(widget.mode == ExportMode.compress ? 'Compress video' : 'Export'),
+            title: Text(
+              widget.mode == ExportMode.compress ? 'Compress video' : 'Export',
+            ),
             automaticallyImplyLeading: !_running,
           ),
           body: SafeArea(
@@ -178,14 +184,20 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     final timeline = _timeline;
     final size = timeline.outputSize(_settings);
     final estimate = timeline.estimateOutputBytes(_settings);
-    final sourceSize = widget.project.clips.fold<int>(0, (s, c) => s + c.media.fileSize);
+    final sourceSize = widget.project.clips.fold<int>(
+      0,
+      (s, c) => s + c.media.fileSize,
+    );
     final isCompress = widget.mode == ExportMode.compress;
 
     return ListView(
       key: const ValueKey('options'),
       padding: const EdgeInsets.all(16),
       children: [
-        _CanvasPreview(project: _exportProject, aspect: timeline.canvasAspectRatio),
+        _CanvasPreview(
+          project: _exportProject,
+          aspect: timeline.canvasAspectRatio,
+        ),
         const SizedBox(height: 16),
         if (!isCompress) ...[
           const _Label('Export for'),
@@ -199,9 +211,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
             const _Label('Shape'),
             ChipRow<AspectRatioPreset>(
               values: AspectRatioPreset.values,
-              selected: _settings.aspectRatio ?? widget.project.canvas.aspectRatio,
+              selected:
+                  _settings.aspectRatio ?? widget.project.canvas.aspectRatio,
               label: (a) => a.label == 'Original' ? 'Full (original)' : a.label,
-              onSelected: (a) => _setSettings(_settings.copyWith(aspectRatio: a)),
+              onSelected: (a) =>
+                  _setSettings(_settings.copyWith(aspectRatio: a)),
             ),
             const SizedBox(height: 16),
           ],
@@ -222,7 +236,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 ),
               ],
               selected: {_settings.fit ?? widget.project.canvas.fit},
-              onSelectionChanged: (v) => _setSettings(_settings.copyWith(fit: v.first)),
+              onSelectionChanged: (v) =>
+                  _setSettings(_settings.copyWith(fit: v.first)),
             ),
             const SizedBox(height: 16),
           ],
@@ -258,7 +273,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           const SizedBox(height: 8),
           LogoPositionChips(
             selected: _logo!.position,
-            onSelected: (p) => setState(() => _logo = _logo!.copyWith(position: p)),
+            onSelected: (p) =>
+                setState(() => _logo = _logo!.copyWith(position: p)),
           ),
           LabeledSlider(
             label: 'Logo size',
@@ -322,7 +338,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
               divisions: 59,
               format: (v) => '${(v / 1000).toStringAsFixed(1)}M',
               onChangeStart: (_) {},
-              onChanged: (v) => _setSettings(_settings.copyWith(customBitrateKbps: v.round())),
+              onChanged: (v) => _setSettings(
+                _settings.copyWith(customBitrateKbps: v.round()),
+              ),
             ),
           const _Label('Format'),
           const Text('MP4 (H.264 + AAC)', style: TextStyle(fontSize: 13)),
@@ -333,7 +351,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _InfoRow('Output', '${size.width}×${size.height} · ${_settings.frameRate} fps'),
+                _InfoRow(
+                  'Output',
+                  '${size.width}×${size.height} · ${_settings.frameRate} fps',
+                ),
                 _InfoRow('Duration', Formatters.duration(timeline.duration)),
                 _InfoRow('Estimated size', '~${Formatters.fileSize(estimate)}'),
                 if (isCompress && sourceSize > 0)
@@ -418,12 +439,18 @@ class _CanvasPreview extends ConsumerWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: FutureBuilder<File?>(
-              future: thumbs.frame(path, clip.isStill ? Duration.zero : clip.trimStart, width: 480),
+              future: thumbs.frame(
+                path,
+                clip.isStill ? Duration.zero : clip.trimStart,
+                width: 480,
+              ),
               builder: (context, snap) => snap.data == null
                   ? const SizedBox.shrink()
                   : Image.file(
                       snap.data!,
-                      fit: project.canvas.fit == CanvasFit.fill ? BoxFit.cover : BoxFit.contain,
+                      fit: project.canvas.fit == CanvasFit.fill
+                          ? BoxFit.cover
+                          : BoxFit.contain,
                     ),
             ),
           ),
@@ -463,7 +490,9 @@ class _PlatformPicker extends StatelessWidget {
     if (t == ExportTarget.custom) return 'Your choice';
     final shape = t.aspectRatio;
     if (shape == null) {
-      return projectAspect == AspectRatioPreset.original ? 'Full frame' : projectAspect.label;
+      return projectAspect == AspectRatioPreset.original
+          ? 'Full frame'
+          : projectAspect.label;
     }
     return '${shape.label} · ${t.resolution.label}';
   }
@@ -492,30 +521,47 @@ class _PlatformPicker extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => onSelected(t),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 6,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: t == selected ? scheme.primary : Colors.transparent,
+                          color: t == selected
+                              ? scheme.primary
+                              : Colors.transparent,
                           width: 1.5,
                         ),
                       ),
                       child: Column(
                         children: [
-                          Icon(_icon(t), size: 22, color: t == selected ? scheme.primary : null),
+                          Icon(
+                            _icon(t),
+                            size: 22,
+                            color: t == selected ? scheme.primary : null,
+                          ),
                           const SizedBox(height: 4),
                           Text(
-                            t == ExportTarget.original ? 'Original (full)' : t.label,
+                            t == ExportTarget.original
+                                ? 'Original (full)'
+                                : t.label,
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           Text(
                             _subtitle(t),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -531,7 +577,11 @@ class _PlatformPicker extends StatelessWidget {
 }
 
 class _ProgressView extends StatelessWidget {
-  const _ProgressView({super.key, required this.progress, required this.onCancel});
+  const _ProgressView({
+    super.key,
+    required this.progress,
+    required this.onCancel,
+  });
   final ExportProgress? progress;
   final VoidCallback onCancel;
 
@@ -562,7 +612,10 @@ class _ProgressView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
-          Text(p?.stage.label ?? 'Preparing…', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            p?.stage.label ?? 'Preparing…',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           Text(
             p?.remaining == null
@@ -596,7 +649,9 @@ class _ResultView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final actions = ExportActions(ref);
     final paths = ref.read(appPathsProvider);
-    final thumb = media.thumbnailPath == null ? null : File(paths.toAbsolute(media.thumbnailPath!));
+    final thumb = media.thumbnailPath == null
+        ? null
+        : File(paths.toAbsolute(media.thumbnailPath!));
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -617,7 +672,13 @@ class _ResultView extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: 12),
-        Text(media.fileName, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13)),
+        Text(
+          media.fileName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13),
+        ),
         Text(
           '${media.width}×${media.height} · ${Formatters.duration(media.duration)} · '
           '${Formatters.fileSize(media.sizeBytes)}',
@@ -655,13 +716,18 @@ class _ResultView extends ConsumerWidget {
               label: 'Delete',
               color: Theme.of(context).colorScheme.error,
               onTap: () async {
-                if (await actions.delete(context, media) && context.mounted) Navigator.pop(context);
+                if (await actions.delete(context, media) && context.mounted) {
+                  Navigator.pop(context);
+                }
               },
             ),
           ],
         ),
         const SizedBox(height: 24),
-        OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+        OutlinedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Done'),
+        ),
       ],
     );
   }

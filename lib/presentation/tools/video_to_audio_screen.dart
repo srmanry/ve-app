@@ -75,7 +75,11 @@ class _VideoToAudioScreenState extends ConsumerState<VideoToAudioScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.movie_outlined),
-              title: Text(widget.media.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(
+                widget.media.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: Text(
                 '${Formatters.duration(info.duration)} · '
                 'audio: ${info.audioCodec ?? 'unknown'}',
@@ -103,9 +107,15 @@ class _VideoToAudioScreenState extends ConsumerState<VideoToAudioScreen> {
             if (running) ...[
               LinearProgressIndicator(value: _progress),
               const SizedBox(height: 8),
-              Text('Extracting… ${(_progress * 100).floor()}%', textAlign: TextAlign.center),
+              Text(
+                'Extracting… ${(_progress * 100).floor()}%',
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: () => _job?.cancel(), child: const Text('Cancel')),
+              OutlinedButton(
+                onPressed: () => _job?.cancel(),
+                child: const Text('Cancel'),
+              ),
             ] else
               FilledButton.icon(
                 onPressed: _extract,
@@ -115,7 +125,12 @@ class _VideoToAudioScreenState extends ConsumerState<VideoToAudioScreen> {
           ] else ...[
             const Icon(Icons.check_circle, color: Colors.greenAccent, size: 48),
             const SizedBox(height: 8),
-            Text(_result!.fileName, textAlign: TextAlign.center),
+            Text(
+              _result!.fileName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
             Text(
               Formatters.fileSize(_result!.sizeBytes),
               textAlign: TextAlign.center,
@@ -145,7 +160,10 @@ class _VideoToAudioScreenState extends ConsumerState<VideoToAudioScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
           ],
         ],
       ),

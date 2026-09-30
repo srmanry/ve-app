@@ -23,13 +23,37 @@ class ExportActions {
   ExportActions(this.ref);
   final WidgetRef ref;
 
-  String pathOf(ExportedMedia media) => ref.read(exportRepositoryProvider).resolvePath(media);
+  String pathOf(ExportedMedia media) =>
+      ref.read(exportRepositoryProvider).resolvePath(media);
 
-  Future<void> play(BuildContext context, ExportedMedia media) => Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => PlayerScreen(path: pathOf(media), title: media.fileName),
-    ),
-  );
+  Future<void> play(BuildContext context, ExportedMedia media) {
+    final loaded = ref.read(exportsProvider).value ?? const <ExportedMedia>[];
+    final mediaList = loaded.any((item) => item.id == media.id)
+        ? loaded
+        : [media, ...loaded];
+    final initialIndex = mediaList.indexWhere((item) => item.id == media.id);
+    final playlist = mediaList
+        .map(
+          (item) => PlayerItem(
+            path: pathOf(item),
+            title: item.fileName,
+            audioOnly: item.isAudioOnly,
+          ),
+        )
+        .toList(growable: false);
+
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PlayerScreen(
+          path: pathOf(media),
+          title: media.fileName,
+          audioOnly: media.isAudioOnly,
+          playlist: playlist,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
 
   Future<void> share(BuildContext context, ExportedMedia media) async {
     final box = context.findRenderObject() as RenderBox?;
@@ -37,14 +61,20 @@ class ExportActions {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(pathOf(media))],
-          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
         ),
       );
     } catch (e) {
       if (context.mounted) {
         await showAppError(
           context,
-          AppException(AppErrorKind.unknown, 'Sharing failed.', debugDetails: '$e'),
+          AppException(
+            AppErrorKind.unknown,
+            'Sharing failed.',
+            debugDetails: '$e',
+          ),
         );
       }
     }
@@ -52,7 +82,10 @@ class ExportActions {
 
   Future<void> saveToGallery(BuildContext context, ExportedMedia media) async {
     if (media.isAudioOnly) {
-      showSnack(context, 'Audio files can\'t go in the photo gallery - use Share instead.');
+      showSnack(
+        context,
+        'Audio files can\'t go in the photo gallery - use Share instead.',
+      );
       return;
     }
     try {
@@ -62,7 +95,9 @@ class ExportActions {
     } on GalException catch (e) {
       if (!context.mounted) return;
       await showAppError(context, switch (e.type) {
-        GalExceptionType.accessDenied => AppException.permissionDenied('save to your gallery'),
+        GalExceptionType.accessDenied => AppException.permissionDenied(
+          'save to your gallery',
+        ),
         GalExceptionType.notEnoughSpace => AppException.insufficientStorage(),
         _ => AppException(
           AppErrorKind.unknown,
@@ -94,7 +129,10 @@ class ExportActions {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('File location', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'File location',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               SelectableText(path, style: const TextStyle(fontSize: 12)),
               const SizedBox(height: 8),
