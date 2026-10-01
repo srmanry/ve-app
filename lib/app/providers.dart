@@ -15,6 +15,7 @@ import '../domain/repositories/project_repository.dart';
 import '../domain/repositories/settings_repository.dart';
 import '../domain/usecases/project_usecases.dart';
 import '../services/ai/background_removal_service.dart';
+import '../services/audio/waveform_service.dart';
 import '../services/export/export_service.dart';
 import '../services/ffmpeg/ffmpeg_video_processing_service.dart';
 import '../services/storage/storage_service.dart';
@@ -85,6 +86,10 @@ final backgroundRemovalProvider = Provider<BackgroundRemovalService>(
     processing: ref.watch(videoProcessingProvider),
     media: ref.watch(mediaRepositoryProvider),
   ),
+);
+
+final waveformServiceProvider = Provider<WaveformService>(
+  (ref) => WaveformService(ref.watch(appPathsProvider), ref.watch(videoProcessingProvider)),
 );
 
 final storageServiceProvider = Provider<StorageService>(

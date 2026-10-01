@@ -84,6 +84,7 @@ final class PersonSegmentationPlugin: NSObject, FlutterPlugin {
       return
     }
     let append = (args["append"] as? Bool) ?? false
+    let singleImage = (args["singleImage"] as? Bool) ?? false
     #if targetEnvironment(simulator)
       // Vision's person segmentation needs the device's ML runtime, which
       // the iOS Simulator doesn't provide (fails with "E5RT is not supported").
@@ -100,7 +101,9 @@ final class PersonSegmentationPlugin: NSObject, FlutterPlugin {
         defer { try? handle.close() }
         try handle.seekToEnd()
         for path in paths {
-          let mask = try autoreleasepool { try Self.segment(path: path, width: width, height: height) }
+          let mask = try autoreleasepool {
+            try Self.segment(path: path, width: width, height: height, accurate: singleImage)
+          }
           try handle.write(contentsOf: mask)
         }
         DispatchQueue.main.async { result(paths.count) }
@@ -114,13 +117,14 @@ final class PersonSegmentationPlugin: NSObject, FlutterPlugin {
 
   private enum SegmentationError: Error { case unreadableImage, noResult, scaleFailed }
 
-  private static func segment(path: String, width: Int, height: Int) throws -> Data {
+  private static func segment(path: String, width: Int, height: Int, accurate: Bool) throws -> Data {
     guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil),
       let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
     else { throw SegmentationError.unreadableImage }
 
     let request = VNGeneratePersonSegmentationRequest()
-    request.qualityLevel = .balanced
+    // Photos get the best mask; video frames trade a little for speed.
+    request.qualityLevel = accurate ? .accurate : .balanced
     request.outputPixelFormat = kCVPixelFormatType_OneComponent8
     try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
     guard let buffer = request.results?.first?.pixelBuffer else { throw SegmentationError.noResult }

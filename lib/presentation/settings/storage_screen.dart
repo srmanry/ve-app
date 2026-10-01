@@ -49,7 +49,7 @@ class _StorageScreenState extends ConsumerState<StorageScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              _row(Icons.file_download_outlined, 'Exported videos', u.exportsBytes),
+              _row(Icons.file_download_outlined, 'Exports', u.exportsBytes),
               _row(Icons.video_library_outlined, 'Imported media (used by projects)', u.mediaBytes),
               _row(Icons.description_outlined, 'Project data', u.projectDataBytes),
               _row(Icons.photo_outlined, 'Thumbnail cache', u.cacheBytes),

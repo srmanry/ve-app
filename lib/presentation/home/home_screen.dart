@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../audio/audio_tool_screen.dart';
 import '../editor/state/editor_state.dart';
+import '../image/image_batch_screen.dart';
+import '../image/image_editor_screen.dart';
 import '../exports/exported_media_tile.dart';
 import '../projects/project_card.dart';
 import 'create_flows.dart';
@@ -53,11 +56,10 @@ class HomeScreen extends ConsumerWidget {
         () => flows.merge(context),
       ),
       _Tool(
-        Icons.audiotrack_outlined,
-        'Video to Audio',
-        () => flows.videoToAudio(context),
+        Icons.compress_outlined,
+        'Compress Video',
+        () => flows.compress(context),
       ),
-      _Tool(Icons.compress_outlined, 'Compress', () => flows.compress(context)),
       _Tool(Icons.movie_edit, 'Cut Video', () => flows.cut(context)),
       _Tool(Icons.auto_awesome_outlined, 'Themes', () => flows.themes(context)),
       _Tool(
@@ -86,6 +88,81 @@ class HomeScreen extends ConsumerWidget {
       ),
     ];
 
+    final audioTools = <_Tool>[
+      _Tool(
+        Icons.audiotrack_outlined,
+        'Video to Audio',
+        () => flows.videoToAudio(context),
+      ),
+      _Tool(Icons.content_cut_rounded, 'Cut Audio', () => flows.audioCut(context)),
+      _Tool(
+        Icons.swap_horiz_rounded,
+        'Convert Audio',
+        () => flows.audioTool(context, AudioTool.convert),
+      ),
+      _Tool(Icons.queue_music_outlined, 'Merge Audio', () => flows.audioMerge(context)),
+      _Tool(Icons.layers_outlined, 'Mix Audio', () => flows.audioMix(context)),
+      _Tool(
+        Icons.view_timeline_outlined,
+        'Arrange Audio',
+        () => flows.audioMix(context, arrange: true),
+      ),
+      _Tool(
+        Icons.graphic_eq_rounded,
+        'Clean Audio',
+        () => flows.audioTool(context, AudioTool.clean),
+      ),
+      _Tool(
+        Icons.compress_outlined,
+        'Compress Audio',
+        () => flows.audioTool(context, AudioTool.compress),
+      ),
+      _Tool(
+        Icons.volume_up_outlined,
+        'Volume & Speed',
+        () => flows.audioTool(context, AudioTool.volume),
+      ),
+    ];
+
+    final imageTools = <_Tool>[
+      _Tool(
+        Icons.photo_filter_outlined,
+        'Edit Photo',
+        () => flows.photoEditor(context, PhotoTool.crop),
+      ),
+      _Tool(
+        Icons.healing_rounded,
+        'Retouch Face',
+        () => flows.photoEditor(context, PhotoTool.retouch),
+      ),
+      _Tool(
+        Icons.badge_outlined,
+        'Passport Photo',
+        () => flows.idPhoto(context),
+      ),
+      _Tool(Icons.draw_outlined, 'Signature', () => flows.signature(context)),
+      _Tool(
+        Icons.document_scanner_outlined,
+        'Scan to PDF',
+        () => flows.scan(context),
+      ),
+      _Tool(
+        Icons.person_remove_outlined,
+        'Remove Photo BG',
+        () => flows.photoEditor(context, PhotoTool.cutout),
+      ),
+      _Tool(
+        Icons.compress_outlined,
+        'Compress Photo',
+        () => flows.photoBatch(context, ImageBatchTool.compress),
+      ),
+      _Tool(
+        Icons.photo_size_select_large_rounded,
+        'Resize Photo',
+        () => flows.photoBatch(context, ImageBatchTool.resize),
+      ),
+    ];
+
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
@@ -99,9 +176,21 @@ class HomeScreen extends ConsumerWidget {
               const _Header(),
               const SizedBox(height: 22),
               _ToolPanel(
-                title: 'Quick actions',
+                title: 'Video tools',
                 badge: 'On-device',
                 tools: tools,
+                columns: 4,
+              ),
+              const SizedBox(height: 22),
+              _ToolPanel(
+                title: 'Audio tools',
+                tools: audioTools,
+                columns: 4,
+              ),
+              const SizedBox(height: 22),
+              _ToolPanel(
+                title: 'Image tools',
+                tools: imageTools,
                 columns: 4,
               ),
               const SizedBox(height: 22),

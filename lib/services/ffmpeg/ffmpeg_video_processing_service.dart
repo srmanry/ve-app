@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:ffmpeg_kit_flutter_new_min_gpl/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_new_min_gpl/ffmpeg_kit_config.dart';
-import 'package:ffmpeg_kit_flutter_new_min_gpl/ffmpeg_session.dart';
-import 'package:ffmpeg_kit_flutter_new_min_gpl/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_new_min_gpl/return_code.dart';
-import 'package:ffmpeg_kit_flutter_new_min_gpl/statistics.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit_config.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_session.dart';
+import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
+import 'package:ffmpeg_kit_flutter_new/return_code.dart';
+import 'package:ffmpeg_kit_flutter_new/statistics.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/media_info.dart';
 import '../../domain/entities/project_timeline.dart';
 import '../video/video_processing_service.dart';
+import 'audio_command_builder.dart';
 import 'ffmpeg_command_builder.dart';
 import 'ffmpeg_error_mapper.dart';
 import 'media_info_parser.dart';
@@ -29,6 +30,7 @@ class FfmpegVideoProcessingService implements VideoProcessingService {
   }
 
   final FfmpegCommandBuilder _builder;
+  final _audio = const AudioCommandBuilder();
   final Set<_FfmpegTask> _running = {};
 
   @override
@@ -129,6 +131,33 @@ class FfmpegVideoProcessingService implements VideoProcessingService {
         expectedDuration: job.duration,
         failureMessage: 'The video couldn\'t be stabilized.',
       );
+
+  @override
+  ProcessingTask processAudio(AudioJob job, String output) => _start(
+    _audio.build(job, output),
+    expectedDuration: job.outputDuration,
+    failureKind: AppErrorKind.exportFailed,
+    failureMessage: 'The audio couldn\'t be processed. Please try again.',
+  );
+
+  @override
+  ProcessingTask decodePcm({
+    required String input,
+    required String output,
+    required int sampleRate,
+    Duration? duration,
+  }) => _start(
+    _audio.buildPcm(input: input, output: output, sampleRate: sampleRate, duration: duration),
+    expectedDuration: duration,
+    failureMessage: 'The waveform couldn\'t be read.',
+  );
+
+  @override
+  Future<void> processImage(ImageJob job, String output) => _start(
+    _builder.buildImage(job, output),
+    failureKind: AppErrorKind.exportFailed,
+    failureMessage: 'The photo couldn\'t be saved.',
+  ).done;
 
   @override
   Future<void> convertImage({required String input, required String output}) => _start(

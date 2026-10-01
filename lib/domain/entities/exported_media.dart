@@ -1,4 +1,4 @@
-/// A file produced by an export (video) or by the Video-to-Audio tool.
+/// A file produced by an export (video), the audio tools or the image tools.
 class ExportedMedia {
   const ExportedMedia({
     required this.id,
@@ -10,6 +10,8 @@ class ExportedMedia {
     this.width = 0,
     this.height = 0,
     this.isAudioOnly = false,
+    this.isImage = false,
+    this.isDocument = false,
     this.thumbnailPath,
     this.projectId,
   });
@@ -26,6 +28,12 @@ class ExportedMedia {
   final int height;
   final bool isAudioOnly;
 
+  /// A photo from the image tools (no duration, not playable).
+  final bool isImage;
+
+  /// A PDF from Scan to PDF (opened in another app).
+  final bool isDocument;
+
   /// Relative to the app data directory.
   final String? thumbnailPath;
   final String? projectId;
@@ -40,6 +48,8 @@ class ExportedMedia {
     width: width,
     height: height,
     isAudioOnly: isAudioOnly,
+    isImage: isImage,
+    isDocument: isDocument,
     thumbnailPath: thumbnailPath,
     projectId: projectId,
   );

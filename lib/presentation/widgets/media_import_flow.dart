@@ -98,37 +98,112 @@ Future<List<ImportedMedia>> importVideos(
 
 /// Picks several photos (gallery or files) for a slideshow.
 Future<List<ImportedMedia>> importPhotos(BuildContext context, WidgetRef ref) async {
-  final source = await showModalBottomSheet<PickSource>(
-    context: context,
-    builder: (context) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Gallery'),
-            subtitle: const Text('Select several photos at once'),
-            onTap: () => Navigator.pop(context, PickSource.gallery),
-          ),
-          ListTile(
-            leading: const Icon(Icons.folder_open_outlined),
-            title: const Text('Files'),
-            subtitle: const Text('JPG, PNG, HEIC, WebP…'),
-            onTap: () => Navigator.pop(context, PickSource.files),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
-  );
+  final source = await _choosePhotoSource(context);
   if (source == null || !context.mounted) return const [];
-  final picked = await _pick(context, () => ref.read(mediaPickerProvider).pickImages(source));
+  final picked = await _pick(
+    context,
+    () => ref
+        .read(mediaPickerProvider)
+        .pickImages(source == _PhotoSource.files ? PickSource.files : PickSource.gallery),
+  );
   if (picked.isEmpty || !context.mounted) return const [];
   return _importAll(context, ref, picked, MediaKind.image);
 }
 
-Future<List<ImportedMedia>> importAudio(BuildContext context, WidgetRef ref) async {
-  final picked = await _pick(context, () => ref.read(mediaPickerProvider).pickAudio());
+/// Photos for the image tools: full quality (lossless PNG, up to 4096 px).
+/// With [multiple] = false only the first picked photo is used; with
+/// [allowCamera] the camera is offered too (documents, signatures).
+Future<List<ImportedMedia>> importPhotosForEditing(
+  BuildContext context,
+  WidgetRef ref, {
+  bool multiple = true,
+  bool allowCamera = false,
+}) async {
+  final source = await _choosePhotoSource(context, allowCamera: allowCamera);
+  if (source == null || !context.mounted) return const [];
+  final picker = ref.read(mediaPickerProvider);
+  var picked = await _pick(
+    context,
+    () => switch (source) {
+      _PhotoSource.camera => picker.takePhoto(),
+      _PhotoSource.gallery => picker.pickImages(PickSource.gallery),
+      _PhotoSource.files => picker.pickImages(PickSource.files),
+    },
+  );
+  if (picked.isEmpty || !context.mounted) return const [];
+  if (!multiple) picked = picked.take(1).toList();
+  final repo = ref.read(mediaRepositoryProvider);
+  final imported = <ImportedMedia>[];
+  final failures = <AppException>[];
+  await runWithProgress(context, (status) async {
+    for (var i = 0; i < picked.length; i++) {
+      final prefix = picked.length > 1 ? '(${i + 1}/${picked.length}) ' : '';
+      try {
+        imported.add(
+          await repo.importPhotoForEditing(picked[i], onStatus: (s) => status.value = '$prefix$s'),
+        );
+      } catch (e) {
+        failures.add(AppException.from(e));
+      }
+    }
+  }, initialStatus: 'Importing…');
+  if (failures.isNotEmpty && context.mounted) {
+    await showAppError(
+      context,
+      failures.length == 1
+          ? failures.first
+          : AppException(
+              failures.first.kind,
+              '${failures.length} of ${picked.length} photos couldn\'t be imported. ${failures.first.message}',
+            ),
+    );
+  }
+  return imported;
+}
+
+enum _PhotoSource { camera, gallery, files }
+
+Future<_PhotoSource?> _choosePhotoSource(BuildContext context, {bool allowCamera = false}) =>
+    showModalBottomSheet<_PhotoSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (allowCamera)
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Camera'),
+                subtitle: const Text('Take a photo now'),
+                onTap: () => Navigator.pop(context, _PhotoSource.camera),
+              ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Gallery'),
+              subtitle: const Text('Select several photos at once'),
+              onTap: () => Navigator.pop(context, _PhotoSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_open_outlined),
+              title: const Text('Files'),
+              subtitle: const Text('JPG, PNG, HEIC, WebP…'),
+              onTap: () => Navigator.pop(context, _PhotoSource.files),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+Future<List<ImportedMedia>> importAudio(
+  BuildContext context,
+  WidgetRef ref, {
+  bool multiple = false,
+}) async {
+  final picked = await _pick(
+    context,
+    () => ref.read(mediaPickerProvider).pickAudio(multiple: multiple),
+  );
   if (picked.isEmpty || !context.mounted) return const [];
   return _importAll(context, ref, picked, MediaKind.audio);
 }

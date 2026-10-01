@@ -19,12 +19,14 @@ class PersonSegmenter {
 
   /// Segments [framePaths] in order, writing one [maskWidth]×[maskHeight]
   /// grayscale mask per frame to [outputPath] (appending when [append]).
+  /// Use [singleImage] for still photos (better quality, slower).
   Future<void> segmentFrames({
     required List<String> framePaths,
     required int maskWidth,
     required int maskHeight,
     required String outputPath,
     required bool append,
+    bool singleImage = false,
   }) async {
     try {
       await _channel.invokeMethod<int>('segmentFrames', {
@@ -33,6 +35,8 @@ class PersonSegmenter {
         'maskHeight': maskHeight,
         'outputPath': outputPath,
         'append': append,
+        // Photos: highest-quality, independent masks with smooth edges.
+        'singleImage': singleImage,
       });
     } on MissingPluginException {
       throw const AppException(

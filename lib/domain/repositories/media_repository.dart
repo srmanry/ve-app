@@ -36,6 +36,14 @@ abstract interface class MediaRepository {
     void Function(String status)? onStatus,
   });
 
+  /// Imports a photo for the image tools: upright, kept as lossless PNG up
+  /// to [ImageToolsLimits.maxSide] px. `info.fileSize` is the original
+  /// file's size (for before/after comparisons).
+  Future<ImportedMedia> importPhotoForEditing(
+    PickedMedia picked, {
+    void Function(String status)? onStatus,
+  });
+
   /// Stores an already-produced file (e.g. extracted audio) in media storage.
   ///
   /// Pass [stillSize] for generated photos (they have no duration to probe).
@@ -60,4 +68,9 @@ abstract interface class MediaRepository {
 
   /// Deletes media files not referenced by any of [inUse].
   Future<int> deleteUnreferenced(Set<String> inUse);
+}
+
+abstract final class ImageToolsLimits {
+  /// Longest side kept by the image tools (memory-safe on 3-4 GB phones).
+  static const maxSide = 4096;
 }

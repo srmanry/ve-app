@@ -11,6 +11,8 @@ abstract final class ExportedMediaJson {
     'width': m.width,
     'height': m.height,
     'audioOnly': m.isAudioOnly,
+    'image': m.isImage,
+    'document': m.isDocument,
     'thumbnail': m.thumbnailPath,
     'projectId': m.projectId,
   };
@@ -25,6 +27,8 @@ abstract final class ExportedMediaJson {
     width: (j['width'] as num?)?.toInt() ?? 0,
     height: (j['height'] as num?)?.toInt() ?? 0,
     isAudioOnly: (j['audioOnly'] as bool?) ?? false,
+    isImage: (j['image'] as bool?) ?? false,
+    isDocument: (j['document'] as bool?) ?? false,
     thumbnailPath: j['thumbnail'] as String?,
     projectId: j['projectId'] as String?,
   );

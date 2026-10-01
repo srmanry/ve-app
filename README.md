@@ -119,7 +119,7 @@ file header shows how to create them with ffmpeg's `lavfi` sources.
 
 ## Before release
 
-* **Licensing:** `ffmpeg_kit_flutter_new_min_gpl` bundles libx264 (GPL). A
+* **Licensing:** `ffmpeg_kit_flutter_new` bundles libx264 (GPL). A
   closed-source app must either comply with the GPL or switch to the LGPL
   `ffmpeg_kit_flutter_new_min` package and a hardware encoder
   (`h264_mediacodec` / `h264_videotoolbox`) in `FfmpegCommandBuilder._videoEncoderArgs`.

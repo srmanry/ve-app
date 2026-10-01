@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../domain/entities/canvas_settings.dart';
+import '../../domain/entities/image_edit.dart';
 import '../../domain/entities/project_timeline.dart';
 import '../../domain/entities/timeline_item.dart';
 import '../../domain/entities/video_clip.dart';
@@ -447,7 +448,8 @@ class FfmpegCommandBuilder {
       '0:a:0',
       if (filters.isNotEmpty) ...['-af', filters.join(',')],
       ...switch (r.format) {
-        AudioOutputFormat.m4a => ['-c:a', 'aac', '-b:a', '192k'],
+        AudioOutputFormat.mp3 => ['-c:a', 'libmp3lame', '-b:a', '${r.quality.kbps}k'],
+        AudioOutputFormat.m4a => ['-c:a', 'aac', '-b:a', '${r.quality.kbps}k'],
         AudioOutputFormat.wav => ['-c:a', 'pcm_s16le'],
       },
       '-ar',
@@ -598,6 +600,51 @@ class FfmpegCommandBuilder {
   }
 
   /// Converts a normalised photo (PNG) to a compact JPEG for storage.
+  /// Image tools: scale with Lanczos and encode. JPG is composited over
+  /// white first (a transparent PNG would otherwise turn black).
+  List<String> buildImage(ImageJob job, String output) {
+    final w = job.width, h = job.height;
+    final c = job.crop;
+    // The chosen part first (fractions of the source), then the size.
+    final pick = c == null || c.isFull
+        ? ''
+        : 'crop=iw*${_num(c.width)}:ih*${_num(c.height)}:iw*${_num(c.left)}:ih*${_num(c.top)},';
+    final scale = job.fill
+        ? '[0:v]${pick}scale=$w:$h:force_original_aspect_ratio=increase:flags=lanczos,'
+              'crop=$w:$h:(iw-$w)/2:(ih-$h)*${_num(job.anchorY.clamp(0.0, 1.0))},format=rgba[s]'
+        : '[0:v]${pick}scale=$w:$h:flags=lanczos,format=rgba[s]';
+    final q = job.quality.clamp(1, 100);
+    return [
+      '-hide_banner',
+      '-y',
+      '-i',
+      job.input,
+      '-filter_complex',
+      switch (job.format) {
+        ImageFormat.jpg =>
+          '$scale;color=c=white:s=${w}x$h[bg];[bg][s]overlay=0:0:shortest=1,format=yuvj444p[out]',
+        _ => '$scale;[s]null[out]',
+      },
+      '-map',
+      '[out]',
+      '-frames:v',
+      '1',
+      ...switch (job.format) {
+        // mjpeg quality: 2 (best) … 31 (worst).
+        ImageFormat.jpg => ['-c:v', 'mjpeg', '-q:v', '${(2 + (100 - q) * 29 / 99).round()}'],
+        ImageFormat.png => [
+          '-c:v',
+          'png',
+          '-compression_level',
+          '6',
+          if (job.dpi != null) ...['-dpi', '${job.dpi}'],
+        ],
+        ImageFormat.webp => ['-c:v', 'libwebp', '-quality', '$q', '-lossless', '0'],
+      },
+      output,
+    ];
+  }
+
   List<String> buildImageToJpeg({required String input, required String output}) => [
     '-hide_banner',
     '-y',

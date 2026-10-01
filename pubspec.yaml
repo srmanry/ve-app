@@ -14,11 +14,6 @@ dependencies:
   # State management
   flutter_riverpod: ^3.4.3
 
-  # Local video processing (FFmpeg 8.1, bundled natively; no network).
-  # NOTE: the "_gpl" variant includes libx264, which is GPL-licensed. See
-  # README "Licensing" before shipping a closed-source build.
-  ffmpeg_kit_flutter_new_min_gpl: ^2.6.2
-
   # Playback / preview
   video_player: ^2.14.0
 
@@ -43,6 +38,10 @@ dependencies:
   uuid: ^4.6.0
   cupertino_icons: ^1.0.8
   camera: ^0.12.1
+  # Local video/audio processing (FFmpeg, bundled natively; no network).
+  # Full build: libx264 for video, libmp3lame for MP3. GPL-licensed - see
+  # README "Licensing" before shipping a closed-source build.
+  ffmpeg_kit_flutter_new: ^4.6.2
 
 dev_dependencies:
   flutter_test:

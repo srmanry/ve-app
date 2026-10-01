@@ -45,10 +45,17 @@ class MediaPicker {
     return _pickFiles(FileType.image, multiple: true);
   }
 
+  /// One photo from the system camera app (documents, signatures).
+  Future<List<PickedMedia>> takePhoto() async {
+    final f = await _imagePicker.pickImage(source: ImageSource.camera, imageQuality: 95);
+    return [if (f != null) PickedMedia(name: f.name, path: f.path, deleteAfterImport: true)];
+  }
+
   /// Videos and photos from the file browser (mixed selection).
   Future<List<PickedMedia>> pickVisualFiles() => _pickFiles(FileType.media, multiple: true);
 
-  Future<List<PickedMedia>> pickAudio() => _pickFiles(FileType.audio, multiple: false);
+  Future<List<PickedMedia>> pickAudio({bool multiple = false}) =>
+      _pickFiles(FileType.audio, multiple: multiple);
 
   Future<List<PickedMedia>> _pickFiles(FileType type, {required bool multiple}) async {
     final files = multiple

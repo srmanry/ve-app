@@ -15,6 +15,7 @@ import '../../core/errors/app_exception.dart';
 import '../../core/permissions/gallery_permission.dart';
 import '../../domain/entities/exported_media.dart';
 import '../widgets/app_dialogs.dart';
+import 'image_viewer_screen.dart';
 import 'player_screen.dart';
 
 /// Actions available on an exported file (used by the export result and
@@ -26,8 +27,27 @@ class ExportActions {
   String pathOf(ExportedMedia media) =>
       ref.read(exportRepositoryProvider).resolvePath(media);
 
-  Future<void> play(BuildContext context, ExportedMedia media) {
-    final loaded = ref.read(exportsProvider).value ?? const <ExportedMedia>[];
+  Future<void> play(BuildContext context, ExportedMedia media) async {
+    if (media.isDocument) {
+      // PDFs open in the phone's PDF viewer.
+      final result = await OpenFilex.open(pathOf(media), type: 'application/pdf');
+      if (result.type != ResultType.done && context.mounted) {
+        showSnack(context, 'No app found to open PDFs - use Share instead.');
+      }
+      return;
+    }
+    if (media.isImage) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ImageViewerScreen(path: pathOf(media), title: media.fileName),
+        ),
+      );
+      return;
+    }
+    // Photos and PDFs can't be played, so they're left out of the playlist.
+    final loaded = (ref.read(exportsProvider).value ?? const <ExportedMedia>[])
+        .where((m) => !m.isImage && !m.isDocument)
+        .toList();
     final mediaList = loaded.any((item) => item.id == media.id)
         ? loaded
         : [media, ...loaded];
@@ -42,7 +62,7 @@ class ExportActions {
         )
         .toList(growable: false);
 
-    return Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PlayerScreen(
           path: pathOf(media),
@@ -81,16 +101,20 @@ class ExportActions {
   }
 
   Future<void> saveToGallery(BuildContext context, ExportedMedia media) async {
-    if (media.isAudioOnly) {
+    if (media.isAudioOnly || media.isDocument) {
       showSnack(
         context,
-        'Audio files can\'t go in the photo gallery - use Share instead.',
+        '${media.isDocument ? 'PDFs' : 'Audio files'} can\'t go in the photo gallery - use Share instead.',
       );
       return;
     }
     try {
       await const GalleryPermission().ensureCanSave();
-      await Gal.putVideo(pathOf(media), album: AppConstants.appName);
+      if (media.isImage) {
+        await Gal.putImage(pathOf(media), album: AppConstants.appName);
+      } else {
+        await Gal.putVideo(pathOf(media), album: AppConstants.appName);
+      }
       if (context.mounted) showSnack(context, 'Saved to your gallery');
     } on GalException catch (e) {
       if (!context.mounted) return;
@@ -101,7 +125,9 @@ class ExportActions {
         GalExceptionType.notEnoughSpace => AppException.insufficientStorage(),
         _ => AppException(
           AppErrorKind.unknown,
-          'The video couldn\'t be saved to the gallery.',
+          media.isImage
+              ? 'The photo couldn\'t be saved to the gallery.'
+              : 'The video couldn\'t be saved to the gallery.',
           debugDetails: '$e',
         ),
       });

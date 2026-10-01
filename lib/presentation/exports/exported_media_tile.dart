@@ -17,7 +17,11 @@ class ExportedMediaTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final actions = ExportActions(ref);
     final paths = ref.read(appPathsProvider);
-    final thumb = media.thumbnailPath == null ? null : File(paths.toAbsolute(media.thumbnailPath!));
+    final thumb = media.isImage
+        ? File(actions.pathOf(media))
+        : media.thumbnailPath == null
+        ? null
+        : File(paths.toAbsolute(media.thumbnailPath!));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -35,7 +39,11 @@ class ExportedMediaTile extends ConsumerWidget {
                     : ColoredBox(
                         color: const Color(0xFF232838),
                         child: Icon(
-                          media.isAudioOnly ? Icons.audiotrack : Icons.movie_outlined,
+                          media.isDocument
+                              ? Icons.picture_as_pdf_outlined
+                              : media.isAudioOnly
+                              ? Icons.audiotrack
+                              : Icons.movie_outlined,
                           color: context.mutedColor,
                         ),
                       ),
@@ -54,8 +62,9 @@ class ExportedMediaTile extends ConsumerWidget {
                     const SizedBox(height: 3),
                     Text(
                       [
-                        if (!media.isAudioOnly) '${media.width}×${media.height}',
-                        Formatters.duration(media.duration),
+                        if (media.isDocument) 'PDF',
+                        if (!media.isAudioOnly && !media.isDocument) '${media.width}×${media.height}',
+                        if (!media.isImage && !media.isDocument) Formatters.duration(media.duration),
                         Formatters.fileSize(media.sizeBytes),
                       ].join(' · '),
                       style: TextStyle(fontSize: 11, color: context.mutedColor),
@@ -84,9 +93,12 @@ class ExportedMediaTile extends ConsumerWidget {
                     }
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'play', child: Text('Play')),
+                    PopupMenuItem(
+                      value: 'play',
+                      child: Text(media.isImage || media.isDocument ? 'Open' : 'Play'),
+                    ),
                     const PopupMenuItem(value: 'share', child: Text('Share')),
-                    if (!media.isAudioOnly)
+                    if (!media.isAudioOnly && !media.isDocument)
                       const PopupMenuItem(value: 'save', child: Text('Save to gallery')),
                     const PopupMenuItem(value: 'location', child: Text('File location')),
                     const PopupMenuItem(value: 'delete', child: Text('Delete')),

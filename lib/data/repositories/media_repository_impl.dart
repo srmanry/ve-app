@@ -171,6 +171,65 @@ class MediaRepositoryImpl implements MediaRepository {
     }
   }
 
+  @override
+  Future<ImportedMedia> importPhotoForEditing(
+    PickedMedia picked, {
+    void Function(String status)? onStatus,
+  }) async {
+    final dest = File(p.join(_paths.mediaDir.path, '${newId()}.png'));
+    onStatus?.call('Preparing photo…');
+    try {
+      final bytes = await _readAll(picked);
+      await _ensureFreeSpace(bytes.length * 3 + 64 * 1024 * 1024);
+      final ({int width, int height}) size;
+      try {
+        size = await const ImageNormalizer().toPng(
+          bytes,
+          dest.path,
+          maxDimension: ImageToolsLimits.maxSide,
+        );
+      } on FormatException catch (e) {
+        throw AppException(
+          AppErrorKind.unsupportedVideo,
+          '"${picked.name}" isn\'t a supported photo.',
+          debugDetails: '$e',
+        );
+      }
+      return ImportedMedia(
+        relativePath: _paths.toRelative(dest.path),
+        displayName: picked.name,
+        info: MediaInfo.stillImage(width: size.width, height: size.height, fileSize: bytes.length),
+      );
+    } catch (e) {
+      if (await dest.exists()) await dest.delete();
+      if (e is AppException) rethrow;
+      if (e is FileSystemException) throw _mapFileError(e);
+      throw AppException(
+        AppErrorKind.importFailed,
+        'This photo couldn\'t be imported.',
+        debugDetails: '$e',
+      );
+    } finally {
+      if (picked.deleteAfterImport && picked.path != null) {
+        final tmp = File(picked.path!);
+        if (await tmp.exists()) await tmp.delete().catchError((Object _) => tmp);
+      }
+    }
+  }
+
+  Future<Uint8List> _readAll(PickedMedia picked) async {
+    if (picked.path != null) {
+      final source = File(picked.path!);
+      if (!await source.exists()) throw AppException.missingSource(picked.name);
+      return source.readAsBytes();
+    }
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in picked.openRead!()) {
+      builder.add(chunk);
+    }
+    return builder.takeBytes();
+  }
+
   Future<void> _copyIn(PickedMedia picked, File dest) async {
     if (picked.path != null) {
       final source = File(picked.path!);

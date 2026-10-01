@@ -9,7 +9,16 @@ import '../../domain/entities/project.dart';
 import '../../domain/entities/project_timeline.dart';
 import '../../domain/entities/video_clip.dart';
 import '../../domain/usecases/project_usecases.dart';
+import '../audio/audio_cut_screen.dart';
+import '../audio/audio_merge_screen.dart';
+import '../audio/audio_mix_screen.dart';
+import '../audio/audio_tool_screen.dart';
 import '../camera/record_screen.dart';
+import '../image/image_batch_screen.dart';
+import '../image/id_photo_screen.dart';
+import '../image/image_editor_screen.dart';
+import '../image/scan_screen.dart';
+import '../image/signature_screen.dart';
 import '../editor/editor_screen.dart';
 import '../editor/state/editor_state.dart';
 import '../export/export_screen.dart';
@@ -17,7 +26,6 @@ import '../tools/cut_screen.dart';
 import '../tools/merge_screen.dart';
 import '../tools/slideshow_screen.dart';
 import '../tools/themes_screen.dart';
-import '../tools/video_to_audio_screen.dart';
 import '../widgets/app_dialogs.dart';
 import '../widgets/media_import_flow.dart';
 
@@ -119,7 +127,43 @@ class CreateFlows {
       return;
     }
     await Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => VideoToAudioScreen(media: media.first)));
+        .push(MaterialPageRoute(
+          builder: (_) => AudioToolScreen(tool: AudioTool.extract, media: media.first),
+        ));
+  }
+
+  // ------------------------------------------------------------ audio tools
+
+  /// Convert / compress / clean / volume & speed on one audio file.
+  Future<void> audioTool(BuildContext context, AudioTool tool) async {
+    final media = await importAudio(context, ref);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AudioToolScreen(tool: tool, media: media.first)),
+    );
+  }
+
+  Future<void> audioCut(BuildContext context) async {
+    final media = await importAudio(context, ref);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => AudioCutScreen(media: media.first)));
+  }
+
+  Future<void> audioMerge(BuildContext context) async {
+    final media = await importAudio(context, ref, multiple: true);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => AudioMergeScreen(initial: media)));
+  }
+
+  /// Layer tracks ([arrange] = false) or place clips in sequence.
+  Future<void> audioMix(BuildContext context, {bool arrange = false}) async {
+    final media = await importAudio(context, ref, multiple: true);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AudioMixScreen(initial: media, arrange: arrange)),
+    );
   }
 
   /// Compression works on an unsaved single-clip project.
@@ -140,5 +184,49 @@ class CreateFlows {
         builder: (_) => ExportScreen(project: project, mode: ExportMode.compress),
       ),
     );
+  }
+
+  // ------------------------------------------------------------ image tools
+
+  /// One photo in the editor, opened on [tool].
+  Future<void> photoEditor(BuildContext context, PhotoTool tool) async {
+    final media = await importPhotosForEditing(context, ref, multiple: false);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ImageEditorScreen(media: media.first, initialTool: tool)),
+    );
+  }
+
+  /// Compress / convert / resize many photos at once.
+  Future<void> photoBatch(BuildContext context, ImageBatchTool tool) async {
+    final media = await importPhotosForEditing(context, ref);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ImageBatchScreen(tool: tool, initial: media)),
+    );
+  }
+
+  /// Passport / ID photo with a new background and a print sheet.
+  Future<void> idPhoto(BuildContext context) async {
+    final media = await importPhotosForEditing(context, ref, multiple: false, allowCamera: true);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => IdPhotoScreen(media: media.first)));
+  }
+
+  /// Signature photo → clean, sized for online forms.
+  Future<void> signature(BuildContext context) async {
+    final media = await importPhotosForEditing(context, ref, multiple: false, allowCamera: true);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => SignatureScreen(media: media.first)));
+  }
+
+  /// Document photos → straightened, cleaned pages → PDF.
+  Future<void> scan(BuildContext context) async {
+    final media = await importPhotosForEditing(context, ref, allowCamera: true);
+    if (media.isEmpty || !context.mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => ScanScreen(initial: media)));
   }
 }
